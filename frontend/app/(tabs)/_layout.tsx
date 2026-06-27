@@ -51,7 +51,7 @@ export default function TabsLayout() {
           }}
         />
       </Tabs>
-      <View style={styles.miniWrap} pointerEvents="box-none">
+      <View style={styles.miniWrap}>
         <MiniPlayer />
       </View>
     </View>
