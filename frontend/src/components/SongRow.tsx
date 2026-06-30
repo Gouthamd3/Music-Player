@@ -6,40 +6,29 @@ import { C, RADIUS, SPACING } from "@/src/lib/colors";
 import type { Song } from "@/src/lib/library";
 
 export function SongRow({
-  song,
-  index,
-  onPress,
-  onMore,
-  active,
+  song, onPress, onMore, active,
 }: {
-  song: Song;
-  index?: number;
-  onPress: () => void;
-  onMore?: () => void;
-  active?: boolean;
+  song: Song; onPress: () => void; onMore?: () => void; active?: boolean;
 }) {
   return (
     <Pressable
       testID={`song-row-${song.id}`}
       onPress={onPress}
+      onLongPress={onMore}
+      delayLongPress={300}
       style={({ pressed }) => [styles.row, pressed && { opacity: 0.7 }]}
     >
       <Image source={{ uri: song.cover }} style={styles.art} contentFit="cover" />
       <View style={styles.meta}>
-        <Text
-          style={[styles.title, active && { color: C.accent }]}
-          numberOfLines={1}
-        >
+        <Text style={[styles.title, active && { color: C.accent }]} numberOfLines={1}>
           {song.title}
         </Text>
-        <Text style={styles.artist} numberOfLines={1}>
-          {song.artist}
-        </Text>
+        <Text style={styles.artist} numberOfLines={1}>{song.artist}</Text>
       </View>
       {onMore && (
         <Pressable
           testID={`song-more-${song.id}`}
-          hitSlop={12}
+          hitSlop={14}
           onPress={onMore}
           style={styles.more}
         >
@@ -52,11 +41,8 @@ export function SongRow({
 
 const styles = StyleSheet.create({
   row: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: SPACING.sm,
-    paddingHorizontal: SPACING.md,
-    gap: SPACING.md,
+    flexDirection: "row", alignItems: "center",
+    paddingVertical: SPACING.sm, paddingHorizontal: SPACING.md, gap: SPACING.md,
   },
   art: { width: 48, height: 48, borderRadius: RADIUS.sm, backgroundColor: C.surface2 },
   meta: { flex: 1, minWidth: 0 },

@@ -1,10 +1,11 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { SongActionsSheet } from "@/src/components/SongActionsSheet";
 import { SongRow } from "@/src/components/SongRow";
 import { C, RADIUS, SPACING } from "@/src/lib/colors";
 import { groupBy, type Song } from "@/src/lib/library";
@@ -14,7 +15,8 @@ export default function LibraryList() {
   const { type } = useLocalSearchParams<{ type: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { songs, playSong, current, recent } = useMusic();
+  const { songs, playSong, current, recent, clearRecent } = useMusic();
+  const [sheet, setSheet] = useState<Song | null>(null);
 
   const title =
     type === "all" ? "All Songs"
@@ -24,11 +26,9 @@ export default function LibraryList() {
             : type === "recent" ? "Recently Played"
               : "Library";
 
-  const items = useMemo(() => {
+  const items: Song[] | null = useMemo(() => {
     if (type === "all") return songs;
-    if (type === "recent") {
-      return recent.map((id) => songs.find((s) => s.id === id)).filter(Boolean) as Song[];
-    }
+    if (type === "recent") return recent.map((id) => songs.find((s) => s.id === id)).filter(Boolean) as Song[];
     return null;
   }, [type, songs, recent]);
 
@@ -46,7 +46,11 @@ export default function LibraryList() {
           <Ionicons name="chevron-back" size={26} color={C.text} />
         </Pressable>
         <Text style={styles.title}>{title}</Text>
-        <View style={{ width: 26 }} />
+        {type === "recent" && (recent.length > 0) ? (
+          <Pressable onPress={clearRecent} hitSlop={10} testID="clear-recent">
+            <Text style={styles.clearTxt}>Clear</Text>
+          </Pressable>
+        ) : <View style={{ width: 50 }} />}
       </View>
 
       {items ? (
@@ -54,11 +58,14 @@ export default function LibraryList() {
           data={items}
           keyExtractor={(s) => s.id}
           contentContainerStyle={{ paddingBottom: 200 }}
+          ListEmptyComponent={
+            <Text style={styles.empty}>Nothing here yet</Text>
+          }
           renderItem={({ item }) => (
             <SongRow
-              song={item}
-              active={current?.id === item.id}
+              song={item} active={current?.id === item.id}
               onPress={() => playSong(item, items)}
+              onMore={() => setSheet(item)}
             />
           )}
         />
@@ -73,7 +80,7 @@ export default function LibraryList() {
             <Pressable
               testID={`group-${name}`}
               style={({ pressed }) => [styles.cell, pressed && { opacity: 0.7 }]}
-              onPress={() => playSong(list[0], list)}
+              onPress={() => router.push({ pathname: "/library/group", params: { type: type ?? "", name } })}
             >
               <Image source={{ uri: list[0].cover }} style={styles.cellArt} contentFit="cover" />
               <Text style={styles.cellTitle} numberOfLines={1}>{name}</Text>
@@ -82,6 +89,9 @@ export default function LibraryList() {
           )}
         />
       ) : null}
+      {sheet && (
+        <SongActionsSheet song={sheet} context={type === "recent" ? "recent" : "library"} onClose={() => setSheet(null)} />
+      )}
     </View>
   );
 }
@@ -93,13 +103,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.md, paddingVertical: SPACING.sm,
   },
   title: { color: C.text, fontSize: 18, fontWeight: "800" },
+  clearTxt: { color: C.accent, fontSize: 14, fontWeight: "700" },
+  empty: { color: C.textDim, textAlign: "center", padding: 32 },
   cell: { flex: 1, marginBottom: SPACING.lg },
-  cellArt: {
-    width: "100%",
-    aspectRatio: 1,
-    borderRadius: RADIUS.sm,
-    backgroundColor: C.surface2,
-  },
+  cellArt: { width: "100%", aspectRatio: 1, borderRadius: RADIUS.sm, backgroundColor: C.surface2 },
   cellTitle: { color: C.text, fontSize: 14, fontWeight: "700", marginTop: 8 },
   cellSub: { color: C.textDim, fontSize: 12, marginTop: 2 },
 });

@@ -36,6 +36,7 @@ export default function RootLayout() {
             />
             <Stack.Screen name="playlist/[id]" />
             <Stack.Screen name="library/[type]" />
+            <Stack.Screen name="library/group" />
           </Stack>
         </MusicProvider>
       </SafeAreaProvider>
