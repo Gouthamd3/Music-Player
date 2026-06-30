@@ -1,37 +1,49 @@
-# Wave — Offline Local Music Player (MVP)
+# Wave — Offline Local Music Player (MVP + Iter 2)
 
 ## Goal
-A Spotify-styled mobile music player for Android & iOS that plays local audio files, with playlists that exist as **physical folders on the device** (movable to any other phone/computer via file manager).
+Spotify-styled offline mobile music player for Android/iOS. Plays local audio files. Playlists are **physical folders** on device, portable to any other phone/laptop.
 
-## Implemented (MVP)
-- **Dark Spotify-inspired UI** with green accent, gradient hero, rounded cards, smooth animations
-- **3-tab navigation**: Home · Search · Your Library
-- **Home**: greeting hero, 6-card quick-picks grid, Recently Played carousel, Albums carousel, All Songs preview, Artists/Folders shortcuts
-- **Full-screen Player** (modal): large art, scrubbable seek slider, prev/play-pause/next/shuffle/repeat controls
-- **Persistent Mini-player** above the tab bar with progress, toggle and next
-- **Search** across song, artist, album with live filtering
-- **Library Browser** at `/library/[type]` for `all`, `albums`, `artists`, `folders`, `recent`
-- **Physical Playlist Folders**:
-  - First create on Android → SAF directory prompt lets user choose a Music folder
-  - App creates `Music/Playlists/<Name>/` real folder
-  - Adding a song physically copies the audio file (base64 via SAF) into the playlist folder so it shows up in any file manager and is portable across devices
-  - Delete asks "delete folder + files" vs "keep files, remove playlist"
-- **Recently Played** auto-tracked via AsyncStorage
-- **Demo Mode**: in web preview / when no library/permission, 8 sample tracks load so the UI is fully usable
+## Implemented
+### Core (MVP)
+- Dark Spotify UI, green accent, gradient hero
+- 3 tabs: Home · Search · Your Library
+- Home: greeting hero, quick-picks grid, Recently Played, Albums, All Songs, Artists/Folders shortcuts
+- Full-screen Player with scrubbable seek, prev/play/next/shuffle/repeat
+- Persistent Mini-player above tab bar (separate Pressables — pause/next don't trigger nav)
+- Search across song/artist/album
+- Library browser at `/library/[type]` for all/albums/artists/folders/recent
+- Group detail at `/library/group?type=...&name=...` for any artist/album/folder
+- Physical playlist folders via SAF (Android) / documentDirectory (iOS):
+  - SAF directory permission requested once
+  - `Music/Playlists/<Name>/` folder physically created (dedupe by case-insensitive name)
+  - Songs copied (base64 via SAF) into folder so they're visible in any file manager
+  - Delete asks "delete folder+files" vs "keep files, remove playlist"
+- Recently Played auto-tracked, with per-song remove + clear-all
+
+### Iter 2 — Polish + Beyond-Spotify Features
+- **Single-player audio engine**: hard pause+remove previous AudioPlayer on each `playSong` (fixes overlap bug)
+- **Reliable pause/play**: state-driven, not polled (fixes pause bug)
+- **Like / Favorites** persisted in AsyncStorage
+- **Sleep Timer** (5 / 10 / 15 / 30 / 45 / 60 min) auto-pauses playback
+- **Playback Speed** 0.5x → 2x
+- **Live Queue View** modal with tap-to-jump
+- **Long-press Song Actions Sheet** — Like, Add to Playlist (with picker), Play now, Remove from Recents, Remove from this Playlist
+- **Pull-to-refresh** library on Home
+- **Demo-mode banner** when no real library is available
+- **Friendly path display** for SAF playlist URIs
 
 ## Architecture
-- **Expo SDK 54** + expo-router (file-based routing)
-- **expo-audio** for playback + background audio
-- **expo-media-library** for scanning device music
-- **expo-file-system / StorageAccessFramework** for physical playlist folders
-- **React Context** for music store (no extra deps)
-- **No backend** — fully offline
+- Expo SDK 54 + expo-router (file-based routing)
+- expo-audio (background audio, playback rate)
+- expo-media-library (scan device music)
+- expo-file-system + StorageAccessFramework (physical playlist folders)
+- React Context store (`MusicStore`) — no extra deps
+- No backend (intentional — fully offline; Python backend left in env unused, ready for future Google Drive sync)
 
-## Future Expansion (not implemented)
-- Google Drive integration (folder/library is abstracted in `src/lib/library.ts` and `playlistFs.ts` so a `gdriveLibrary.ts` can be added without UI changes)
-- Embedded album art extraction from ID3
-- Smart shuffle, equalizer, lyrics
+## APK Build
+See `/app/BUILD_APK.md` — codebase is build-ready, requires only `eas-cli` + free Expo account.
 
-## Permissions (in app.json)
-- Android: `READ_MEDIA_AUDIO`, `READ/WRITE_EXTERNAL_STORAGE`, `FOREGROUND_SERVICE`, `WAKE_LOCK`
-- iOS: `NSAppleMusicUsageDescription`, `UIBackgroundModes: audio`
+## Future Expansion (kept architecturally ready, not implemented)
+- Google Drive integration (`src/lib/library.ts` + `playlistFs.ts` abstracted)
+- Embedded album art from ID3
+- Lyrics, EQ, AI recommendations
